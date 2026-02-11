@@ -1,0 +1,65 @@
+1. Kernel – the brain
+It talks directly to hardware.
+It controls CPU, memory, disk, network and processes.
+Apps never touch hardware directly — kernel does it for them.
+
+2. User Space – where we work
+This is where commands and apps run (bash, docker, nginx, python).
+When we run a command, it asks the kernel for resources.
+
+3. systemd (PID 1) – the starter/manager
+When the system boots, systemd starts everything: ssh, docker, nginx, network etc.
+Without it, the server would start with nothing running.
+
+How Processes Work
+
+When we run a command like:
+
+python app.py
+
+
+Linux:
+
+Creates a process
+
+Gives it a PID
+
+Assigns CPU & memory
+
+Process states:
+
+Running → using CPU
+
+Sleeping → waiting
+
+Stopped → paused
+
+Zombie → finished but not cleared
+
+Useful commands:
+
+ps
+top
+kill
+
+Why systemd is Important
+
+systemd manages services automatically.
+
+Example:
+
+systemctl start nginx
+systemctl enable nginx
+systemctl status nginx
+
+
+So when server restarts → services come back automatically.
+This is critical in DevOps because servers must recover without manual work.
+
+In simple words:
+
+Kernel = controls hardware
+User space = runs apps
+systemd = starts and manages services
+
+Understanding this helps us debug server issues faster.
