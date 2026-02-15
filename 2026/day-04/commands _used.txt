@@ -1,0 +1,19 @@
+1  sudo apt install nginx
+    2  ls
+    3  cd sample_linux
+    4  top
+    5  clear
+    6  systemctl status nginx
+    7  sytemctl stop nginx
+    8  systemctl stop nginx
+    9  systemctl status nginx
+   10  systemctl start  nginx
+   11  systemctl status nginx
+   12  systemctl disable nginx
+   13  systemctl status nginx
+   14  systemctl enable nginx
+   15  systemctl status nginx
+   16  systemctl list_units
+   17  systemctl list-units
+   18  journalctl -u nginx
+   19  history
