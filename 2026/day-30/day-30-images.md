@@ -36,3 +36,4 @@ docker image history nginx
 docker system df
 docker rm <container_id>
 docker rmi <image_id>
+
