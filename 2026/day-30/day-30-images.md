@@ -32,8 +32,10 @@ docker exec <container_id> ls /
 docker logs -f <container_id>
 docker inspect <container_id>
 docker images
-docker image history nginx
+docker image history nginx    
 docker system df
 docker rm <container_id>
-docker rmi <image_id>
+
+
+
 
