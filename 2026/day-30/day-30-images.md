@@ -1,4 +1,4 @@
-Day 29 – Docker Containers Practice
+
 
 Today I practiced basic Docker container operations.
 
