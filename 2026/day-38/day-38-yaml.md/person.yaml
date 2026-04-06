@@ -1,0 +1,14 @@
+---
+name: Janardhan
+role: DevOps Learner
+experience_years: 1
+learning: true
+
+tools:
+  - Docker
+  - Git
+  - Jenkins
+  - Kubernetes
+  - AWS
+
+hobbies: [cricket, coding, learning, movies]

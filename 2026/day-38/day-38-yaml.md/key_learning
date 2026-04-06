@@ -1,0 +1,5 @@
+## What I Learned (3 Key Points)
+
+1. YAML is space-sensitive, and even one extra space or tab can break the file.
+2. Lists, nested objects, and multi-line strings make YAML useful for DevOps tools like Docker Compose and GitHub Actions.
+3. Validation with `yamllint` helps quickly find indentation errors, trailing spaces, and formatting mistakes.

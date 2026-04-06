@@ -1,0 +1,22 @@
+---
+server:
+  name: ubuntu-server
+  ip: 192.168.1.10
+  port: 8080
+
+database:
+  host: localhost
+  name: devops_db
+  credentials:
+    user: admin
+    password: admin123
+
+startup_script_literal: |
+  sudo apt update
+  sudo apt install docker.io -y
+  sudo systemctl start docker
+
+startup_script_folded: >
+  sudo apt update &&
+  sudo apt install docker.io -y &&
+  sudo systemctl start docker
