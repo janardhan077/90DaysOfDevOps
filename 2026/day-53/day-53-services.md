@@ -1,53 +1,35 @@
-# Day 53 - Kubernetes Services
+# Day 53 – Kubernetes Services
 
-## Objective
+## What I Learned
 
-Learned how Kubernetes Services provide stable networking for applications, enable service discovery, and expose applications inside or outside the cluster.
+Today I learned about **Kubernetes Services** and why they are essential for communication between applications running inside a Kubernetes cluster.
+
+One important thing I understood is that **Pods are temporary (ephemeral)**. If a Pod crashes or is recreated, it gets a new IP address. This makes it unreliable to communicate directly with Pods.
+
+A **Service** solves this problem by providing a **stable IP address and DNS name**. Instead of connecting to individual Pods, applications connect to the Service, and Kubernetes automatically forwards the traffic to the correct Pods.
 
 ---
 
-# Why do Kubernetes Services exist?
+## Relationship Between Deployments, Pods, and Services
 
-Pods in Kubernetes are **ephemeral**, meaning they can be created, deleted, or recreated at any time. Whenever a Pod is recreated, it receives a **new IP address**.
-
-If applications communicate directly with Pod IPs, communication will fail whenever the Pod IP changes.
-
-A Kubernetes Service solves this problem by providing:
-
-- A stable virtual IP (ClusterIP)
-- A permanent DNS name
-- Load balancing across multiple Pods
-- A single entry point to access an application
-
-### Relationship between Pods, Deployments, and Services
-
-- **Deployment**
-  - Creates and manages Pods.
-  - Ensures the desired number of replicas are always running.
-
-- **Pods**
-  - Run the application containers.
-  - Have temporary IP addresses.
-
-- **Service**
-  - Selects Pods using labels.
-  - Provides a stable IP and DNS name.
-  - Routes traffic to healthy Pods.
+- A **Deployment** manages the lifecycle of Pods and ensures the desired number of replicas are running.
+- **Pods** run the application containers but have temporary IP addresses.
+- A **Service** sits in front of the Pods, provides a permanent endpoint, and distributes incoming requests among the available Pods.
 
 ```
 Client
-   │
-   ▼
+   |
+   v
 Service
-   │
-   ├────────► Pod 1
-   ├────────► Pod 2
-   └────────► Pod 3
+   |
+   +----> Pod 1
+   +----> Pod 2
+   +----> Pod 3
 ```
 
 ---
 
-# Service Manifest 1 - ClusterIP
+# Service Manifest 1 – ClusterIP
 
 ```yaml
 apiVersion: v1
@@ -59,32 +41,31 @@ spec:
   selector:
     app: web-app
   ports:
-  - port: 80
-    targetPort: 80
+    - port: 80
+      targetPort: 80
 ```
 
-### Explanation
+### What it does
 
-- Creates an internal Service.
-- Accessible only inside the Kubernetes cluster.
-- Selects Pods with the label:
+This creates an internal Service that is only accessible from within the Kubernetes cluster.
+
+The selector looks for Pods with the label:
 
 ```yaml
 app: web-app
 ```
 
-- Exposes port **80**.
-- Forwards traffic to container port **80**.
+Whenever another Pod accesses this Service, Kubernetes forwards the request to one of the matching Pods.
 
-Use case:
+**Best use cases:**
 
-- Backend APIs
+- Backend services
+- Internal APIs
 - Databases
-- Internal microservices
 
 ---
 
-# Service Manifest 2 - NodePort
+# Service Manifest 2 – NodePort
 
 ```yaml
 apiVersion: v1
@@ -96,41 +77,26 @@ spec:
   selector:
     app: web-app
   ports:
-  - port: 80
-    targetPort: 80
-    nodePort: 30080
+    - port: 80
+      targetPort: 80
+      nodePort: 30080
 ```
 
-### Explanation
+### What it does
 
-- Exposes the application on every Kubernetes node.
-- External users can access the application using:
+NodePort exposes the application on every Kubernetes node using a specific port.
+
+The application can be accessed using:
 
 ```
 <Node-IP>:30080
 ```
 
-Traffic flow:
-
-```
-Browser
-    │
-NodeIP:30080
-    │
-NodePort Service
-    │
-Pods
-```
-
-Use case:
-
-- Development
-- Testing
-- Local Kubernetes clusters
+This is useful for testing applications on a local Kubernetes cluster without using a cloud load balancer.
 
 ---
 
-# Service Manifest 3 - LoadBalancer
+# Service Manifest 3 – LoadBalancer
 
 ```yaml
 apiVersion: v1
@@ -142,139 +108,92 @@ spec:
   selector:
     app: web-app
   ports:
-  - port: 80
-    targetPort: 80
+    - port: 80
+      targetPort: 80
 ```
 
-### Explanation
+### What it does
 
-- Requests an external cloud load balancer.
-- Available on managed Kubernetes platforms like:
-  - AWS EKS
-  - Azure AKS
-  - Google GKE
+This Service type is mainly used in cloud environments like AWS, Azure, or Google Cloud.
 
-Traffic flow:
+Kubernetes requests an external load balancer from the cloud provider and forwards internet traffic to the application.
 
-```
-Internet
-    │
-Load Balancer
-    │
-Service
-    │
-Pods
-```
-
-Use case:
-
-- Public web applications
-- APIs
-- Production workloads
+This is commonly used for production applications.
 
 ---
 
-# Difference Between Service Types
+# Difference Between ClusterIP, NodePort, and LoadBalancer
 
-| Feature | ClusterIP | NodePort | LoadBalancer |
-|----------|-----------|----------|--------------|
-| Internal Access | ✅ Yes | ✅ Yes | ✅ Yes |
-| External Access | ❌ No | ✅ Yes | ✅ Yes |
-| Stable Cluster IP | ✅ Yes | ✅ Yes | ✅ Yes |
-| Node Port | ❌ No | ✅ Yes | Usually Yes |
-| Cloud Load Balancer | ❌ No | ❌ No | ✅ Yes |
-| Best For | Internal apps | Development & testing | Production |
+| Service Type | Description | Best Used For |
+|--------------|-------------|---------------|
+| **ClusterIP** | Accessible only inside the cluster | Internal communication |
+| **NodePort** | Exposes the application through a node's IP and a fixed port | Local testing and development |
+| **LoadBalancer** | Creates an external cloud load balancer | Production applications |
 
 ---
 
-# Kubernetes DNS Service Discovery
+# Kubernetes DNS
 
-Every Service automatically receives a DNS name.
+Kubernetes automatically creates a DNS name for every Service.
 
-Example:
+For example, if the Service name is:
 
 ```
-Service Name:
 web-app-cluster
 ```
 
-Namespace:
-
-```
-default
-```
-
-Full DNS name:
+and it is in the default namespace, the full DNS name becomes:
 
 ```
 web-app-cluster.default.svc.cluster.local
 ```
 
-Applications can communicate using:
+Instead of remembering IP addresses, applications can simply communicate using:
 
 ```
 http://web-app-cluster
 ```
 
-instead of remembering IP addresses.
+CoreDNS is responsible for resolving these names to the correct Service IP.
 
-Example:
+During testing, I used:
 
-```
-Frontend Pod
-       │
-       ▼
-http://web-app-cluster
-       │
-       ▼
-Backend Pods
+```bash
+nslookup web-app-cluster
 ```
 
-DNS is provided by **CoreDNS**, which runs inside the Kubernetes cluster.
+The returned IP matched the Service's **ClusterIP**, confirming that DNS resolution was working correctly.
 
 ---
 
 # What are Endpoints?
 
-A Service itself does not contain application code.
+A Service doesn't directly know where the application is running.
 
-Instead, it maintains a list of Pod IPs called **Endpoints**.
+Instead, Kubernetes creates **Endpoints**, which are simply the IP addresses of all Pods selected by the Service.
 
-Example:
+For example:
 
 ```
 Service
-
-web-app-cluster
-
-↓
-
-Endpoints
-
-10.244.1.3
-10.244.2.3
-10.244.4.3
+    |
+    +----> 10.244.1.3
+    +----> 10.244.2.3
+    +----> 10.244.4.3
 ```
 
 Whenever a request reaches the Service, Kubernetes forwards it to one of these endpoint Pods.
 
-To inspect Endpoints:
+I inspected the Endpoints using:
 
 ```bash
 kubectl get endpoints
 ```
 
-Detailed view:
+and for more details:
 
 ```bash
 kubectl describe endpoints web-app-cluster
-```
-
-Example output:
-
-```
-NAME              ENDPOINTS
-web-app-cluster   10.244.1.3:80,10.244.2.3:80,10.244.4.3:80
 ```
 
 ---
@@ -287,86 +206,55 @@ web-app-cluster   10.244.1.3:80,10.244.2.3:80,10.244.4.3:80
 kubectl get svc
 ```
 
-Example:
-
-```
-NAME                  TYPE        CLUSTER-IP      PORT(S)
-web-app-cluster       ClusterIP   10.96.125.2     80/TCP
-web-app-nodeport      NodePort    10.96.190.168   80:30080/TCP
-```
-
----
-
-### DNS Test
-
-```bash
-nslookup web-app-cluster
-```
-
-Output:
-
-```
-Name:
-web-app-cluster.default.svc.cluster.local
-
-Address:
-10.96.125.2
-```
-
-The resolved IP matches the Service's ClusterIP.
-
----
-
 ### Check Endpoints
 
 ```bash
 kubectl get endpoints
 ```
 
-Example:
+### Test DNS
 
+```bash
+nslookup web-app-cluster
 ```
-NAME              ENDPOINTS
-web-app-cluster   10.244.1.3:80,10.244.2.3:80,10.244.4.3:80
-```
 
----
+The DNS name resolved to the same IP shown as the Service's ClusterIP.
 
-### Test Service
+### Test the Service
+
+For an internal Service:
 
 ```bash
 curl http://web-app-cluster
 ```
 
-or
+For a NodePort Service:
 
 ```bash
 curl <Node-IP>:30080
 ```
 
-The request is forwarded to one of the running Pods.
-
 ---
 
 # Screenshots
 
-Include the following screenshots:
+I have included screenshots of:
 
-1. `kubectl get svc`
-2. `kubectl get endpoints`
-3. `kubectl get pods -o wide`
-4. `nslookup web-app-cluster`
-5. `curl` test output showing the application response
+- `kubectl get svc`
+- `kubectl get endpoints`
+- `kubectl get pods -o wide`
+- `nslookup web-app-cluster`
+- Service testing using `curl`
 
 ---
 
 # Key Takeaways
 
-- Services provide stable networking for Pods.
-- Pods can change IP addresses, but Services maintain a constant IP and DNS name.
-- Services use labels and selectors to find Pods.
+- Pods are temporary and their IP addresses can change.
+- Services provide a stable way to communicate with Pods.
+- Services use labels and selectors to identify the correct Pods.
 - ClusterIP is used for internal communication.
-- NodePort exposes applications through a node's IP and port.
-- LoadBalancer exposes applications using a cloud load balancer.
-- CoreDNS enables service discovery using DNS names.
-- Endpoints contain the list of Pod IPs that receive traffic.
+- NodePort allows external access using a node's IP and port.
+- LoadBalancer exposes applications through a cloud provider.
+- CoreDNS makes Service discovery simple using DNS names.
+- Endpoints contain the list of Pod IPs that receive traffic from a Service.
